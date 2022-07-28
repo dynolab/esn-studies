@@ -9,7 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 import restools
-from studies.none2021_predicting_transition_using_reservoir_computing.extensions import relaminarisation_time, \
+from studies.none2021_moehlis_transition.extensions import relaminarisation_time, \
     survival_function, laminarization_probability
 from comsdk.research import Research
 from comsdk.misc import load_from_json, find_all_files_by_named_regexp

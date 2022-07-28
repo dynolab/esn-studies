@@ -6,7 +6,7 @@ import time
 import numpy as np
 
 from restools.standardised_programs import StandardisedIntegrator, StandardisedProgramEdge, MoehlisModelIntegrator
-from studies.none2021_predicting_transition_using_reservoir_computing.extensions import LocalPythonTimeIntegrationGraph,\
+from studies.none2021_moehlis_transition.extensions import LocalPythonTimeIntegrationGraph,\
     RemotePythonTimeIntegrationGraph, generate_random_ic_for_lifetime_distr
 from comsdk.communication import LocalCommunication, SshCommunication
 from comsdk.research import Research, CreateTaskGraph

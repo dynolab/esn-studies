@@ -8,7 +8,7 @@ import numpy as np
 
 from restools.standardised_programs import StandardisedProgramEdge, MoehlisModelIntegrator, EsnIntegrator
 from restools.timeintegration import TimeIntegrationLowDimensional
-from studies.none2021_predicting_transition_using_reservoir_computing.extensions import LocalPythonTimeIntegrationGraph,\
+from studies.none2021_moehlis_transition.extensions import LocalPythonTimeIntegrationGraph,\
     RemotePythonTimeIntegrationGraph
 from comsdk.communication import LocalCommunication, SshCommunication
 from comsdk.research import Research, CreateTaskGraph

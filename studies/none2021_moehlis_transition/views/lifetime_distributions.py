@@ -9,7 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 import restools
-from studies.none2021_predicting_transition_using_reservoir_computing.extensions import relaminarisation_time, survival_function
+from studies.none2021_moehlis_transition.extensions import relaminarisation_time, survival_function
 from comsdk.research import Research
 from comsdk.misc import load_from_json, find_all_files_by_named_regexp
 from thequickmath.reduced_models.transition_to_turbulence import MoehlisFaisstEckhardtModel
