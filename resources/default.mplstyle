@@ -1,0 +1,8 @@
+text.usetex : True
+text.latex.preamble : \usepackage{amsmath}\usepackage{amsfonts}\usepackage{tabularx}
+lines.linewidth : 2
+font.size : 16
+xtick.labelsize : 14
+ytick.labelsize : 14
+legend.fontsize : 12
+
