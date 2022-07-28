@@ -14,7 +14,7 @@ from comsdk.communication import LocalCommunication, SshCommunication
 from comsdk.research import Research, CreateTaskGraph
 from comsdk.graph import Graph, State, Func
 from comsdk.edge import Edge, dummy_predicate, make_dump, make_composite_func, make_cd, make_mkdir
-import comsdk.misc as aux
+from comsdk.misc import ProxyDict
 
 
 def make_check_job_finished(comm=None):
@@ -51,7 +51,7 @@ def make_little_dump(input_filename, omit=None, chande_dir=True, remote=False):
         if omit is None:
             dumped_d = d
         else:
-            if (isinstance(d, aux.ProxyDict)):
+            if (isinstance(d, ProxyDict)):
                 dumped_d = {key: val for key, val in d._data.items() if not key in omit}
             else:
                 dumped_d = {key: val for key, val in d.items() if not key in omit}
