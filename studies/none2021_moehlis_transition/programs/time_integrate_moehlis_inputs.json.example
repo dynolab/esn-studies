@@ -1,0 +1,15 @@
+{
+    "time_step": 0.001,
+    "final_time": 1500,
+    "save_dt": 1,
+    "re": 500,
+    "l_x": 1.75,  // L_x = l_x * pi
+    "l_z": 1.2,  // L_z = l_z * pi
+    "stop_condition": "default",  // can be either 'default' or 'close_to_laminar_flow'
+    "initial_conditions": [
+        [...],
+        [...],
+        [...]
+    ],
+    "output_filename": "lam_event_truth_ensemble_20_2000"
+}

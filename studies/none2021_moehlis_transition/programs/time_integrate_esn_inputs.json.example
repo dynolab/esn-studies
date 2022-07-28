@@ -1,0 +1,15 @@
+{
+    "esn_path": "...",
+    "dt_as_defined_by_esn": 1,
+    "n_steps": 20000,
+    "initial_conditions": [
+        [...],
+        [...],
+        [...]
+    ],
+    "output_filenames": [
+        "...",
+        "...",
+        "..."
+    ]
+}

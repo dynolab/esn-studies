@@ -1,0 +1,4 @@
+{
+    "path_to_reducedmodels": "@path_to_reducedmodels_repository@",
+    "path_to_pyESN": "@path_to_pyESN_repository@"
+}

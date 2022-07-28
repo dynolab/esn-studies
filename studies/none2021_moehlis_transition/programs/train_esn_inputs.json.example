@@ -1,0 +1,24 @@
+{
+    "original_model_parameters": {
+        ...,
+        ...,
+        ...
+    },
+    "training_timeseries_path": "...",
+    "test_timeseries_path": "...",
+    "synchronization_len": 10,
+    "test_chunk_timeseries_len": 300,
+    "spectral_radius_values": [
+        ...,
+        ...,
+        ...
+    ],
+    "sparsity_values": [
+        ...,
+        ...,
+        ...
+    ],
+    "reservoir_dimension": ...,
+    "optimal_esn_filename": "...",
+    "description": "..."
+}

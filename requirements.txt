@@ -1,0 +1,7 @@
+numpy
+scipy
+matplotlib
+jsons
+git+https://sa2systems.ru:88/com/pycomsdk.git@dev
+git+https://github.com/anton-pershin/thequickmath.git
+git+https://github.com/anton-pershin/restools.git
