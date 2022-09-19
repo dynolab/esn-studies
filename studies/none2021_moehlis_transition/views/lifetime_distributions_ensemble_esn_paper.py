@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 import sys
 sys.path.append(os.getcwd())
@@ -15,6 +16,17 @@ from studies.none2021_moehlis_transition.extensions import relaminarisation_time
 from comsdk.research import Research
 from comsdk.misc import load_from_json, find_all_files_by_named_regexp
 from thequickmath.reduced_models.transition_to_turbulence import MoehlisFaisstEckhardtModel
+from thequickmath.stats import EmpiricalDistribution
+
+
+READ_FROM_DUMP = True
+
+class SurvivalFunctionSummary:
+    def __init__(self, num):
+        self.medians = np.zeros((num,))
+        self.ppf00 = np.zeros_like(self.medians)
+        self.ppf08 = np.zeros_like(self.medians)
+
 
 
 def build_relaminarisation_times_from_tasks(res, tasks, inputs_file='inputs.json'):
@@ -66,7 +78,12 @@ if __name__ == '__main__':
             ],
             'ensemble_paths': [
                 [],
-                [os.path.join(res.get_task_path(98), f'esn_re_275_{i}') for i in range(1, 10+1)],  # this is with noise
+                [
+                    os.path.join(res.get_task_path(t_i), f'esn_re_275_{esn_i}') 
+                    for t_i in range(93, 102+1)
+                    #for t_i in range(93, 94)
+                        for esn_i in range(1, 10+1)
+                ],  # this is with noise
                 [],
             ],
         }
@@ -139,7 +156,7 @@ if __name__ == '__main__':
     # Plot original ESNs
     for re_i in range(len(data['Truth']['re_values'])):
         re = data['Truth']['re_values'][re_i]
-        if re in data['ESN']['re_values']:
+        if re in data['ESN']['re_values'] and re != 275:
             relam_times_esn = build_relaminarisation_times_from_tasks(res, data['ESN']['tasks'][re_i - 1])
             expon_law_t_0, expon_law_tau = expon.fit(np.array(relam_times_esn, dtype=float))
             expon_law_fits['ESN'][re] = {'t_0': expon_law_t_0, 'tau': expon_law_tau}
@@ -152,9 +169,51 @@ if __name__ == '__main__':
         re = data['Truth']['re_values'][re_i]
         if re in data['ESN']['re_values']:
             task_paths = data['ESN']['ensemble_paths'][re_i - 1]
+            if len(task_paths) == 0:
+                continue
+            survival_function_prob = None
+            survival_function_times = []
+            times = None
             for t in task_paths:
-                relam_times_esn = build_relaminarisation_times_from_tasks(res, [t], inputs_file='../ti_inputs_1.json')
-                lines = ax.semilogy(*survival_function(relam_times_esn), 's--', color=colors['dark'][re_i], linewidth=2)
+                print(t)
+                if READ_FROM_DUMP:
+                    with open(os.path.join(t, 'survival_function.obj'), 'rb') as f:
+                        d = pickle.load(f)
+                        survival_function_prob = d['survival_function_prob']
+                        times = d['times']
+                else:
+                    relam_times_esn = build_relaminarisation_times_from_tasks(res, [t], inputs_file='../ti_inputs_1.json')
+                    times, survival_function_prob = survival_function(relam_times_esn)
+                    with open(os.path.join(t, 'survival_function.obj'), 'wb') as f:
+                        pickle.dump({
+                            'survival_function_prob': np.array(survival_function_prob),
+                            'times': np.array(times),
+                        }, f)
+                survival_function_times.append(times)
+                #lines = ax.semilogy(*survival_function(relam_times_esn), 's--', color=colors['dark'][re_i], linewidth=2)
+            survival_function_times = np.array(survival_function_times)  # rows = esn_i, cols = times
+            medians = np.zeros((survival_function_times.shape[1],))
+            ppf01 = np.zeros_like(medians)
+            ppf09 = np.zeros_like(medians)
+            sf_summary = SurvivalFunctionSummary(num=survival_function_times.shape[1])
+            for t_i in range(survival_function_times.shape[1]):
+                sf_times_distr = EmpiricalDistribution(survival_function_times[:, t_i])
+                sf_summary.medians[t_i] = sf_times_distr.median()
+                sf_summary.ppf00[t_i] = sf_times_distr.ppf(0.0)
+                sf_summary.ppf08[t_i] = sf_times_distr.ppf(0.8)                
+            lines = ax.semilogy(sf_summary.medians, survival_function_prob, 's--', color=colors['dark'][re_i], linewidth=2)
+            ax.fill_betweenx(
+                survival_function_prob,
+                sf_summary.ppf00,
+                sf_summary.ppf08,
+                alpha=0.2,
+                color=colors['dark'][re_i],
+                linewidth=2,
+                zorder=-10)
+            lines_for_legend.append(lines[0])
+            re_for_legend.append(re)
+            #lines = ax.semilogy(sf_summary.ppf01, survival_function_prob, 's--', color=colors['dark'][re_i], linewidth=2)
+            #lines = ax.semilogy(sf_summary.ppf09, survival_function_prob, 's--', color=colors['dark'][re_i], linewidth=2)
 
     for re in expon_law_fits['ESN'].keys():
         print(f'Re = {re}, Truth exponential law parameters: t_0 = {expon_law_fits["Truth"][re]["t_0"]}, '
@@ -171,6 +230,7 @@ if __name__ == '__main__':
     lines_for_legend = [pair[0] for pair in lines_and_re_sorted]
     labes_for_legend = [r'$Re = ' + str(pair[1]) + r'$' for pair in lines_and_re_sorted]
     ax.legend(lines_for_legend, labes_for_legend)
+    ax.set_rasterization_zorder(0)
     plt.tight_layout()
     plt.savefig('lifetime_distrs.eps', dpi=200)
     #gs.tight_layout(fig, rect=[0, 0, 1.5, 1.5])
