@@ -42,6 +42,9 @@ def plot_data_train_pred(n_data, data_train, data_predicted, i, filename=None):
         ax.grid()
         ax.legend()
         i += n_data.shape[1]//2
+    axes[0].set_ylabel(r'$u$', fontsize=14)
+    axes[1].set_ylabel(r'$v$', fontsize=14)
+    plt.xlabel(r'$t$', fontsize=14)
     if filename is not None:
         plt.savefig(f"C:\\Users\\njuro\\Documents\\Диплом Магистратура\\Figures\\{filename}")
  #   plt.show()
@@ -53,8 +56,8 @@ def plot_data_phase_traj(n_data, data_train, data_predicted, i, figsz=(7,7), fil
     plt.plot(u[:,i],v[:,i], '-',  label="True")
     plt.plot(data_train[:,i],data_train[:,256+i], 'm--', label="Train")
     plt.plot(data_predicted[:,i],data_predicted[:,256+i], '-', label="Prediction")
-    plt.xlabel("u")
-    plt.ylabel("v")
+    plt.xlabel(r'$u$', fontsize=14)
+    plt.ylabel(r'$v$', fontsize=14)
     plt.legend()
     if filename is not None:
         plt.savefig(f"C:\\Users\\njuro\\Documents\\Диплом Магистратура\\Figures\\{filename}")
@@ -67,9 +70,9 @@ def plot_data_train_pred_mesh(x, t_pred, u_pred, v_pred, u_v_concat, figsz=(10,4
     v = u_v_concat[:,256:]
     p1 = ax[0].pcolormesh(x, t_pred[:u_pred.shape[0]-1], u[time_train:-1,:], shading='nearest',cmap='plasma')
     p2 = ax[1].pcolormesh(x, t_pred[:u_pred.shape[0]-1], u_pred[:-1,:], shading='nearest',cmap='plasma')
-    ax[0].set_xlabel(r'$x$')
-    ax[1].set_xlabel(r'$x$')
-    ax[0].set_ylabel(r'$t$')
+    ax[0].set_xlabel(r'$x$')#, fontsize=14)
+    ax[1].set_xlabel(r'$x$')#, fontsize=14)
+    ax[0].set_ylabel(r'$t$')#, fontsize=14)
     fig.colorbar(p1, ax=ax[0])
     fig.colorbar(p2, ax=ax[1])
     plt.suptitle("u and u_pred")
@@ -83,9 +86,9 @@ def plot_data_train_pred_mesh(x, t_pred, u_pred, v_pred, u_v_concat, figsz=(10,4
     fig, ax = plt.subplots(1,2, figsize=figsz)
     p1 = ax[0].pcolormesh(x, t_pred[:v_pred.shape[0]-1], v[time_train:-1,:], shading='nearest',cmap='plasma')
     p2 = ax[1].pcolormesh(x, t_pred[:v_pred.shape[0]-1], v_pred[:-1,:], shading='nearest',cmap='plasma')
-    ax[0].set_xlabel(r'$x$')
-    ax[1].set_xlabel(r'$x$')
-    ax[0].set_ylabel(r'$t$')
+    ax[0].set_xlabel(r'$x$')#, fontsize=14)
+    ax[1].set_xlabel(r'$x$')#, fontsize=14)
+    ax[0].set_ylabel(r'$t$')#, fontsize=14)
     fig.colorbar(p1, ax=ax[0])
     fig.colorbar(p2, ax=ax[1])
     plt.suptitle("v and v_pred")
@@ -126,12 +129,11 @@ if __name__ == '__main__':
     #print(u_v_concat.shape)
 
     #находим спектры
-    coeffs_data = np.zeros((0,512))
-    a_hat_data = np.zeros((0,512))
+    coeffs_data = np.zeros((18001,512))
     for i in range(u_v_concat.shape[0]):
         n_data = u_v_concat[i]
         coeffs = get_spectrum(n_data)
-        coeffs_data = np.append(coeffs_data, [coeffs], axis=0)
+        coeffs_data[i] = coeffs
     #print(coeffs_data.shape)
 
      #ESN
@@ -161,7 +163,8 @@ if __name__ == '__main__':
                                    random_state=rand,
                                    use_bias=True) 
 
-    pca = PCA(n_components = 8)
+    pca_num=8
+    pca = PCA(n_components = pca_num)
     X_pca_reduced = pca.fit_transform(coeffs_data)
 
     #разделяем на обучающую и тестовую выборки
@@ -183,24 +186,24 @@ if __name__ == '__main__':
     #print(data_train_ret.shape)
 
     #возвращаемся от спектров train
-    data_train = np.zeros((0,512))
+    data_train = np.zeros((time_train,512))
     for i in range(data_train_ret.shape[0]):
-        data_train = np.append(data_train, [get_from_spectrum(x.shape[0]*2,data_train_ret[i])], axis=0)
+        data_train[i] = get_from_spectrum(x.shape[0]*2,data_train_ret[i])
     print(data_train.shape)
 
     #возвращаемся от спектров predict
-    data_return = np.zeros((0,512))
+    data_return = np.zeros((time_predict,512))
     for i in range(X_pca_returned.shape[0]):
-        data_return = np.append(data_return, [get_from_spectrum(x.shape[0]*2,X_pca_returned[i])], axis=0)
+        data_return[i] = get_from_spectrum(x.shape[0]*2,X_pca_returned[i])
     print(data_return.shape)
 
-    plot_data_train_pred(u_v_concat, data_train, data_return, 2, filename=f'1D_bru_images_note_11_04\\u_v_ot_t_esn_{esn_type}.png')
+    plot_data_train_pred(u_v_concat, data_train, data_return, 2, filename=f'1D_bru_images_note_11_04\\u_v_ot_t_esn_{esn_type}_{pca_num}.png')
 
-    plot_data_phase_traj(u_v_concat, data_train, data_return, 2, filename=f'1D_bru_images_note_11_04\\phase_tr_2_esn_{esn_type}.png') #, figsz=(4,4)
+    plot_data_phase_traj(u_v_concat, data_train, data_return, 2, filename=f'1D_bru_images_note_11_04\\phase_tr_2_esn_{esn_type}_{pca_num}.png') #, figsz=(4,4)
 
     t_pred = np.arange(20+0.01*time_train, 20+0.01*(time_train+time_predict), 0.01)
 
-    plot_data_train_pred_mesh(x, t_pred, data_return[:,:256], data_return[:,256:], u_v_concat, figsz=(6,2.5), path='1D_bru_images_note_11_04', filename=f'pred_colormesh_esn_{esn_type}.png')
+    plot_data_train_pred_mesh(x, t_pred, data_return[:,:256], data_return[:,256:], u_v_concat, figsz=(6,2.5), path='1D_bru_images_note_11_04', filename=f'pred_colormesh_esn_{esn_type}_{pca_num}.png')
 
     import winsound
     frequency = 500  # Set Frequency To 2500 Hertz

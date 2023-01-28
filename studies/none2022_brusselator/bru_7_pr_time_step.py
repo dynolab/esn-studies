@@ -9,6 +9,8 @@ import pandas as pd
 from skesn.cross_validation import ValidationBasedOnRollingForecastingOrigin
 from skesn.weight_generators import optimal_weights_generator
 
+from sys import argv
+
 def _bru(data_number):
     filename = 'C:\\Users\\njuro\\Documents\\restools\\Researches\\2022-07-26-predicting-brusselator-via-esn\\1-Dataset_from_Calum_1D_Brusselator\\brusselator1DB_%s.npz'  %data_number
     data = np.load(filename)
@@ -41,6 +43,9 @@ def plot_data_train_pred(n_data, data_train, data_predicted, i, filename=None):
         ax.grid()
         ax.legend()
         i += n_data.shape[1]//2
+    axes[0].set_ylabel(r'$u$', fontsize=14)
+    axes[1].set_ylabel(r'$v$', fontsize=14)
+    plt.xlabel(r'$t$', fontsize=14)
     if filename is not None:
         plt.savefig(f"C:\\Users\\njuro\\Documents\\Диплом Магистратура\\Figures\\{filename}")
  #   plt.show()
@@ -52,8 +57,8 @@ def plot_data_phase_traj(n_data, data_train, data_predicted, i, figsz=(7,7), fil
     plt.plot(u[:,i],v[:,i], '-',  label="True")
     plt.plot(data_train[:,i],data_train[:,256+i], 'm--', label="Train")
     plt.plot(data_predicted[:,i],data_predicted[:,256+i], '-', label="Prediction")
-    plt.xlabel("u")
-    plt.ylabel("v")
+    plt.xlabel(r'$u$', fontsize=14)
+    plt.ylabel(r'$v$', fontsize=14)
     plt.legend()
     if filename is not None:
         plt.savefig(f"C:\\Users\\njuro\\Documents\\Диплом Магистратура\\Figures\\{filename}")
@@ -98,7 +103,10 @@ def plot_data_train_pred_mesh(x, t_pred, u_pred, v_pred, u_v_concat, figsz=(10,4
 
 if __name__ == '__main__':
     #t_miss sets time step: step = 0.01 * t_miss
-    t_miss=1
+    if len(argv) >1:
+        t_miss = int(argv[1])
+    else:
+        t_miss=1
     print(" t_miss ", t_miss, "\n step ", t_miss*0.01)
     x, t, u_v_concat = _bru('2')
     u_v_concat = u_v_concat[::t_miss,:]
@@ -107,7 +115,7 @@ if __name__ == '__main__':
      #ESN
     rand=10
     np.random.seed(rand)
-    esn_type = 'stand' #'stand' 'opt_param'
+    esn_type = 'opt_param' #'stand' 'opt_param'
     if esn_type == 'stand':
         esn_bru_uv = EsnForecaster(n_reservoir=1500,
                                    spectral_radius=0.95,
