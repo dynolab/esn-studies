@@ -55,7 +55,7 @@ if __name__ == '__main__':
                 axes[i][j].set_xticklabels([])
             if j == 1:
                 axes[i][j].set_yticklabels([])
-            axes[i][j].grid()
+            #axes[i][j].grid()
     axes[0][0].set_title('Training timeseries')
     axes[0][1].set_title('ESN predictions')
     plt.tight_layout(h_pad=0.2)

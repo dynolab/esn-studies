@@ -6,7 +6,9 @@ import posixpath
 
 import numpy as np
 
-from restools.standardised_programs import StandardisedIntegrator, StandardisedProgramEdge, EsnIntegrator, EsnTrainer
+from restools.standardised_programs import StandardisedIntegrator, StandardisedProgramEdge, EsnIntegrator, EsnTrainer, nohup_command_start_and_end
+from restools.timeintegration import TimeIntegrationLowDimensional
+from comsdk.communication import BaseCommunication
 from comsdk.research import CreateTaskGraph
 from comsdk.graph import Graph, State, Func
 from comsdk.edge import Edge, dummy_predicate, InOutMapping, DownloadFromRemoteEdge, \
@@ -170,7 +172,8 @@ class LocalPythonTimeIntegrationGraph(Graph):
             task_name = task_prefix
             task_name += '_R_{}'.format(d['re'])
             task_name += '_T_{}'.format(d['final_time'])
-            task_name += '_ens_{}'.format(len(d['initial_conditions']))
+            if 'initial_conditions' in d:
+                task_name += '_ens_{}'.format(len(d['initial_conditions']))
             return task_name
         task_start, task_end = CreateTaskGraph.create_branch(res, task_name_maker=task_name_maker)
         ti_init, ti_term = LocalPythonTimeIntegrationGraph.create_branch(comm, integrator)
@@ -410,3 +413,35 @@ class ESNTrainAndIntergateGraph(Graph):
 
         subgraph_state.replace_with_graph(subgraph)
         super().__init__(task_start, ti_term)
+
+
+class EsnIntegratorWOSynchronization(StandardisedIntegrator):
+    ti_class = TimeIntegrationLowDimensional
+
+    def __init__(self,
+                 input_filename_key='input_filename',
+                 nohup=False,
+                 remote=False,
+                 pipes_index_key=None,
+                 chaining_command_at_start=None,
+                 chaining_command_at_end=None,
+                 ):
+        if chaining_command_at_start is None or chaining_command_at_end is None:
+            chaining_command_at_start = lambda d: ''
+            chaining_command_at_end = lambda d: ''
+            if nohup:
+                chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True, pipes_index_key=pipes_index_key)
+        super().__init__(name='time_integrate_esn_without_synchronization.py',
+                         keyword_names=('cores',),
+                         trailing_args_keys=(input_filename_key,),
+                         chaining_command_at_start=chaining_command_at_start,
+                         chaining_command_at_end=chaining_command_at_end
+                         )
+
+    def postprocessor_edge(self, comm: BaseCommunication, predicate: Func = dummy_predicate,
+                           io_mapping: InOutMapping = InOutMapping()):
+        pass
+
+    @classmethod
+    def concatenate_integration_piece(cls, d, input_datas_key='integration_subdir', output_data_key=None):
+        pass

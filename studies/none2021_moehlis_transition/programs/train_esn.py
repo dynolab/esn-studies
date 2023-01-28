@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Users/tony/miniconda3/envs/esn/bin/python
 import os
 os.environ["OMP_NUM_THREADS"] = "4"
 os.environ["MKL_NUM_THREADS"] = "4"

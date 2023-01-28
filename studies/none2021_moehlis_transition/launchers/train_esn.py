@@ -29,6 +29,7 @@ if __name__ == '__main__':
     re = 275
     l_x = 1.75
     l_z = 1.2
+    new_time_step = 5
     data = {
         'res': res,
         'input_filename': 'inputs.json',
@@ -42,12 +43,14 @@ if __name__ == '__main__':
         'initial_conditions': [],
  #       'training_timeseries_path': os.path.join(res.remote_research_path, f'training_timeseries_re_{re}_new_pert'),
  #       'test_timeseries_path': os.path.join(res.remote_research_path, f'test_timeseries_re_{re}_pert'),
-        'training_timeseries_path': os.path.join(res.local_research_path, f'training_timeseries_re_{re}_new_pert.pickle'),
-        'test_timeseries_path': os.path.join(res.local_research_path, f'test_timeseries_re_{re}_pert.pickle'),
+        'training_timeseries_path': os.path.join(res.local_research_path, f'training_timeseries_re_{re}_time_step_{new_time_step}'),
+        'test_timeseries_path': os.path.join(res.local_research_path, f'test_timeseries_re_{re}_time_step_{new_time_step}'),
         'synchronization_len': 10,
-        'test_chunk_timeseries_len': 300,
+        'test_chunk_timeseries_len': int(300 // new_time_step),
         'spectral_radius_values': [0.5],
-        'sparsity_values': [0.1, 0.5, 0.9],
+        'sparsity_values': [0.9],
+        'trial_number': 1,
+        'random_seed_starts_at': 1,
         'reservoir_dimension': 1500,
         'optimal_esn_filename': f'esn_re_{re}',
         'description': f'Training ESN for Re = {re}.',
@@ -60,10 +63,13 @@ if __name__ == '__main__':
 #                                             task_prefix='ESNTrainingPert')
 
     graph = LocalPythonTimeIntegrationGraph(res, local_comm,
-                                            EsnTrainer(input_filename_key='input_filename', nohup=True),
+                                            EsnTrainer(
+                                                input_filename_key='input_filename',
+                                                nohup=False,
+                                                ),
                                             input_filename=data['input_filename'],
                                          #   output_filenames_key='optimal_esn_filename',
-                                            task_prefix='ESNTrainingPert')
+                                            task_prefix=f'ESNTraining_timestep_{new_time_step}')
     
     okay = graph.run(data)
     if not okay:

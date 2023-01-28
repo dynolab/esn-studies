@@ -8,7 +8,7 @@ import numpy as np
 from restools.standardised_programs import StandardisedProgramEdge, MoehlisModelIntegrator, EsnIntegrator
 from restools.timeintegration import TimeIntegrationLowDimensional
 from studies.none2021_moehlis_transition.extensions import LocalPythonTimeIntegrationGraph,\
-    RemotePythonTimeIntegrationGraph
+    RemotePythonTimeIntegrationGraph, EsnIntegratorWOSynchronization
 from comsdk.communication import LocalCommunication, SshCommunication
 from comsdk.research import Research, CreateTaskGraph
 from comsdk.graph import Graph, State, Func
@@ -33,27 +33,26 @@ if __name__ == '__main__':
     n_ics = len(ics)
     re = 275
     esn_name = f'esn_re_{re}'
+    esn_task = 136
+    dt_as_defined_by_esn = 5
     #esn_name = 'esn_trained_wo_lam_event'
     l_x = 1.75
     l_z = 1.2
-    n_steps = 20000
+    n_steps = int(100 // dt_as_defined_by_esn)
     data = {
         'res': res,
 #        'esn_path': os.path.join(res.local_research_path, esn_name),
-        'esn_path': os.path.join(res.get_task_path(80), esn_name),
+        'esn_path': os.path.join(res.get_task_path(esn_task), esn_name),
 #        'esn_path': os.path.join(res.remote_research_path, esn_name),
-        'dt_as_defined_by_esn': 1,
+        'dt_as_defined_by_esn': dt_as_defined_by_esn,
         'n_steps': n_steps,
-        'final_time': n_steps,
+        'final_time': n_steps*dt_as_defined_by_esn,
         're': re,
         'l_x': l_x,
         'l_z': l_z,
-        'initial_conditions': ics,
         'input_filename': 'inputs.json',
-        'output_filenames': [str(i) for i in range(1, n_ics + 1)],
-        'description': f'ESN trajectories for perturbation dynamics for lifetime distribution at Re = {re}. Initial conditions are taken from task '
-                       f'{source_task}. '
-                       f'Noise is disabled while predicting'
+        'output_filename': '1',
+        'description': f'ESN prediction without synchronization at Re = {re} for esn trained in task {esn_task}'
     }
 
 #    graph = RemotePythonTimeIntegrationGraph(res, ssh_comm,
@@ -62,9 +61,11 @@ if __name__ == '__main__':
 #                                             task_prefix='ESNPrediction')
 
     graph = LocalPythonTimeIntegrationGraph(res, local_comm,
-                                            EsnIntegrator(input_filename_key='input_filename', nohup=True),
+                                            EsnIntegratorWOSynchronization(
+                                                input_filename_key='input_filename',
+                                                nohup=False),
                                             input_filename=data['input_filename'],
-                                            task_prefix=f'ESNPredictionNoNoise')
+                                            task_prefix=f'ESNPredictionWOSync_timestep_{dt_as_defined_by_esn}')
     okay = graph.run(data)
     if not okay:
         print(data['__EXCEPTION__'])

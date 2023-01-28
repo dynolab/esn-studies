@@ -118,7 +118,7 @@ if __name__ == '__main__':
         #ax.plot([begin_time, t_lims[1]], [lam_state_ke, lam_state_ke], 'k--', linewidth=3)
         ax.set_ylabel(r'$E$')
         ax.set_ylim((-2, 35))
-        ax.grid()
+        #ax.grid()
     axes[-1].set_xlabel(r'$t$')
     plt.tight_layout()
     plt.savefig('prediction_of_turbulent_to_laminar_transition.eps', dpi=200)

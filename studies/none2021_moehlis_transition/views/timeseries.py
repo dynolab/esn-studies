@@ -17,16 +17,16 @@ from thequickmath.reduced_models.transition_to_turbulence import MoehlisFaisstEc
 if __name__ == '__main__':
     plt.style.use('resources/default.mplstyle')
 
-    task = 42
+    task = 138
     res_id = 'RC_MOEHLIS'
     res = Research.open(res_id)
     task_path = res.get_task_path(task)
     fig, ax = plt.subplots(1, 1, figsize=(12, 6))
-    for i in range(58, 59):
+    for i in range(1, 2):
         #with open(os.path.join(task_path, 'esn_re_275_4', str(i)), 'rb') as f:
-        #with open(os.path.join(task_path, str(i)), 'rb') as f:
+        with open(os.path.join(task_path, str(i)), 'rb') as f:
         #with open(os.path.join(res.local_research_path, '36-OldMoehlisDataset_R_500', '1'), 'rb') as f:
-        with open(os.path.join(res.local_research_path, 'test_timeseries_re_275_9'), 'rb') as f:
+        #with open(os.path.join(res.local_research_path, 'test_timeseries_re_275_9'), 'rb') as f:
             data = pickle.load(f)
             t = data['time']
             ts = data['timeseries']

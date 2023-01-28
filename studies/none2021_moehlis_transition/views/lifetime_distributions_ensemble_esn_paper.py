@@ -222,7 +222,7 @@ if __name__ == '__main__':
               f'tau = {expon_law_fits["ESN"][re]["tau"]}, '
               f'Relative error in tau: {np.abs(expon_law_fits["ESN"][re]["tau"] - expon_law_fits["Truth"][re]["tau"]) / np.abs(expon_law_fits["Truth"][re]["tau"])}')
         expon_law_fits['ESN'][re]
-    ax.grid()
+    #ax.grid()
     ax.set_xlabel(r'$t$')
     ax.set_ylabel(r'$S(t)$')
     ax.set_xlim((-100, 16000))

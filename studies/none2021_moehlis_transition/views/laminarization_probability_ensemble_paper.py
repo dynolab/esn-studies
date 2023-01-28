@@ -131,7 +131,7 @@ if __name__ == '__main__':
         tick.label.set_fontsize(14)
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize(14)
-    ax.grid()
+    #ax.grid()
     ax.set_rasterization_zorder(0)
     plt.tight_layout()
     plt.savefig('p_lam.eps', dpi=200)

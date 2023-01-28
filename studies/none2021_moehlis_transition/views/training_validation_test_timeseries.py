@@ -42,18 +42,19 @@ if __name__ == '__main__':
     ax.plot(range(len(ke)), ke, color='gray', linewidth=3)
     ax.set_xlabel(r'$t$', fontsize=16)
     ax.set_ylabel(r'$E$', fontsize=16)
-    ax.grid()
-    obj_to_rasterize = []
-    obj = ax.fill_between(range(300), 0.5, 4, alpha=0.2)
-    obj_to_rasterize.append(obj)
-    obj = ax.fill_between(range(300, 600), 0.5, 4, alpha=0.2)
-    obj_to_rasterize.append(obj)
-    obj = ax.fill_between(range(600, 900), 0.5, 4, alpha=0.2)
-    obj_to_rasterize.append(obj)
+    #ax.grid()
+    obj = ax.fill_between(range(300), 0.5, 4,
+                          alpha=0.2,
+                          zorder=-10)
+    obj = ax.fill_between(range(300, 600), 0.5, 4,
+                          alpha=0.2,
+                          zorder=-10)
+    obj = ax.fill_between(range(600, 900), 0.5, 4,
+                          alpha=0.2,
+                          zorder=-10)
+    ax.set_rasterization_zorder(0)
     plt.tight_layout()
-    fname = 'test_timeseries.eps'
-    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
-    reduce_eps_size(fname)
+    plt.savefig('test_timeseries.eps', dpi=200)
     plt.show()
 
 #with open('/media/tony/Seagate/Leeds/PhD/research/2021-04-30_Predicting_transition_to_turbulence_using_reservoir_computing/new_ts.json', 'r') as f:
