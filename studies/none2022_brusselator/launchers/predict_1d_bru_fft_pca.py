@@ -29,7 +29,7 @@ def allab(x, coef_a, coef_b):
     return result
 
 
-def get_spectrum(n_data):
+def get_spectrum_old(n_data):
     x_ = np.linspace(-np.pi, np.pi, n_data.shape[0], endpoint=False)
     a_hat_coeffs = (-1) ** (np.arange(len(x_))) * np.fft.fft(n_data) / len(x_)
     a_coeffs = a_coeff(a_hat_coeffs[: int(len(x_) // 2)])
@@ -37,11 +37,35 @@ def get_spectrum(n_data):
     return np.r_[a_coeffs, b_coeffs]
 
 
-def get_from_spectrum(x_sh, coeffs):
+def get_spectrum(n_data):
+    x_ = np.linspace(-np.pi, np.pi, n_data.shape[0], endpoint=False)
+    coeffs = np.fft.fft(n_data)[
+        : int(len(x_) // 2) + 1
+    ]  # +1 is important to catch Nyquist frequency
+    a_coeffs = np.real(coeffs)
+    b_coeffs = np.imag(coeffs)[1:-1]
+    return (
+        np.r_[a_coeffs, b_coeffs] / 200
+    )  # coefficient 200 is just a scaler. Without scaling, ESN does not train well
+
+
+def get_from_spectrum_old(x_sh, coeffs):
     a_coeffs = coeffs[: coeffs.shape[0] // 2]
     b_coeffs = coeffs[coeffs.shape[0] // 2 :]
     x_ = np.linspace(-np.pi, np.pi, x_sh, endpoint=False)  # coeffs.shape[0]
     return allab(x_, a_coeffs, b_coeffs) - a_coeffs[0] / 2
+
+
+def get_from_spectrum(x_sh, coeffs):
+    a_coeffs = coeffs[: coeffs.shape[0] // 2 + 1]
+    b_coeffs = coeffs[coeffs.shape[0] // 2 + 1 :]
+    complex_coeffs = a_coeffs + 1j * np.r_[[0], b_coeffs, [0]]
+    complete_complex_coeffs = np.r_[
+        complex_coeffs, np.conjugate(np.flip(complex_coeffs[1:-1]))
+    ]
+    return 200 * np.real_if_close(
+        np.fft.ifft(complete_complex_coeffs), tol=100
+    )  # coefficient 200 is just a scaler. Without scaling, ESN does not train well
 
 
 if __name__ == "__main__":
@@ -57,6 +81,7 @@ if __name__ == "__main__":
     x, t, u_v_concat = preprocess_1d_bru_data(data)
 
     # находим спектры
+    # coeffs_data = np.zeros((18001, 512))  # TODO: Anton's changes
     coeffs_data = np.zeros((18001, 512))
     for i in range(u_v_concat.shape[0]):
         n_data = u_v_concat[i]
@@ -120,12 +145,14 @@ if __name__ == "__main__":
     data_train = np.zeros((time_train, 512))
     for i in range(data_train_ret.shape[0]):
         data_train[i] = get_from_spectrum(x.shape[0] * 2, data_train_ret[i])
+
     print(data_train.shape)
 
     # возвращаемся от спектров predict
     data_return = np.zeros((time_predict, 512))
     for i in range(X_pca_returned.shape[0]):
         data_return[i] = get_from_spectrum(x.shape[0] * 2, X_pca_returned[i])
+
     print(data_return.shape)
 
     plot_data_train_pred(
