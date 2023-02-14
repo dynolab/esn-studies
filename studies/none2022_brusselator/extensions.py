@@ -1,6 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from thequickmath.field import Space, map_to_2d_mesh
+import pywt
+
+Array1D = np.ndarray
+Array2D = np.ndarray
 
 
 def preprocess_1d_bru_data(data):
@@ -106,3 +110,49 @@ def plot_data_train_pred_mesh(
         if filename is not None:
             plt.savefig(f"{name}_{filename}")
         # plt.show()
+
+
+def get_spectrum_1d(data: Array1D, treat_as_amplitude=False) -> Array1D:
+    coeffs = np.fft.fft(data)[
+        : int(data.shape[0] // 2) + 1
+    ]  # +1 is important to catch Nyquist frequency
+    if treat_as_amplitude:
+        return np.abs(coeffs) / 200
+    else:
+        a_coeffs = np.real(coeffs)
+        b_coeffs = np.imag(coeffs)[1:-1]
+        return (
+            np.r_[a_coeffs, b_coeffs] / 200
+        )  # coefficient 200 is just a scaler. Without scaling, ESN does not train well
+
+
+def get_spectrum_2d(data: Array2D, treat_as_amplitude=False) -> Array2D:
+    coeffs = np.fft.fft2(data)[
+        : int(data.shape[0] // 2) + 1, : int(data.shape[1] // 2) + 1
+    ]  # +1 is important to catch Nyquist frequency
+    if treat_as_amplitude:
+        return np.abs(coeffs) / 200
+    else:
+        a_coeffs = np.real(coeffs)
+        b_coeffs = np.imag(coeffs)[1:-1, 1:-1]
+        return (
+            np.r_[a_coeffs.reshape(-1), b_coeffs.reshape(-1)] / 200
+        )  # coefficient 200 is just a scaler. Without scaling, ESN does not train well
+
+
+def get_wavelet_spectrum_2d(data: Array2D) -> Array2D:
+    coeffs = pywt.dwt2(data, "db8", mode="periodic")
+    # coeffs = pywt.dwt2(data, "haar", mode="periodic")
+    return coeffs
+
+
+def get_from_spectrum_1d(x_sh, coeffs):
+    b_coeffs = coeffs[coeffs.shape[0] // 2 + 1 :]
+    a_coeffs = coeffs[: coeffs.shape[0] // 2 + 1]
+    complex_coeffs = a_coeffs + 1j * np.r_[[0], b_coeffs, [0]]
+    complete_complex_coeffs = np.r_[
+        complex_coeffs, np.conjugate(np.flip(complex_coeffs[1:-1]))
+    ]
+    return 200 * np.real_if_close(
+        np.fft.ifft(complete_complex_coeffs), tol=100
+    )  # coefficient 200 is just a scaler. Without scaling, ESN does not train well
