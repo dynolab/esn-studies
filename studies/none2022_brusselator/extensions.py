@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 from thequickmath.field import Space, map_to_2d_mesh
 import pywt
 
@@ -156,3 +157,18 @@ def get_from_spectrum_1d(x_sh, coeffs):
     return 200 * np.real_if_close(
         np.fft.ifft(complete_complex_coeffs), tol=100
     )  # coefficient 200 is just a scaler. Without scaling, ESN does not train well
+
+def make_a_movie(field, filename = None):
+    fig, ax = plt.subplots(figsize=(5, 5))
+    plt.axis('off')
+    fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
+
+    ims = []
+    for i in range(field.shape[0]):
+        im = ax.imshow(field[i,:,:],cmap='winter',aspect='auto')
+        ims.append([im])
+
+    if filename is not None:
+        ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
+        writervideo = animation.FFMpegWriter(fps=60)
+        ani.save(f"{filename}.mp4", writer=writervideo)
