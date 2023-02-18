@@ -4,9 +4,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from comsdk.research import Research
 
-import sys
-sys.path.insert(1, 'C:\\Users\\njuro\\Documents\\esn-studies')
-
 from studies.none2022_brusselator.extensions import (
     make_a_movie,
 )
