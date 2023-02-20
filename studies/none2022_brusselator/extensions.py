@@ -55,9 +55,7 @@ def plot_data_train_pred(n_data, data_train, data_predicted, t, i, filename=None
     plt.xlabel(r"$t$", fontsize=14)
     if filename is not None:
         plt.savefig(filename)
-
-
-#   plt.show()
+    plt.show()
 
 
 def plot_data_phase_traj(
