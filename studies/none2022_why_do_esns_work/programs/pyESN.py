@@ -192,9 +192,13 @@ class ESN:
                             self.inverse_out_activation(teachers_scaled[transient:, :])).T
 
         # remember the last state for later:
+
         self.laststate = states[-1, :]
         self.lastinput = inputs[-1, :]
         self.lastoutput = teachers_scaled[-1, :]
+        self.R = extended_states
+        self.A = teachers_scaled
+        
 
         # optionally visualize the collected states
         if inspect:

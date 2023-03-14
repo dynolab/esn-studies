@@ -1,7 +1,7 @@
 import os
 import sys
 sys.path.append(os.getcwd())
-sys.path.append(r'C:\Users\ovann\Desktop\VKR\Reps\esn-studies')
+sys.path.append('\\'.join(os.getcwd().split('\\')[:-3]))
 import pickle
 import json
 from operator import itemgetter
