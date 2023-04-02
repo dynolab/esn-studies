@@ -1,6 +1,7 @@
 # Figures
 *.png
 *.eps
+*.mp4
 
 # VSCode
 .vscode
