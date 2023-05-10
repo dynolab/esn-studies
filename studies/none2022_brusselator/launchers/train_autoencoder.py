@@ -22,17 +22,13 @@ class Encoder(nn.Module):
         self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.conv3 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=8, padding=4)
         self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv4 = nn.Conv2d(
-            in_channels=16, out_channels=32, kernel_size=8, padding=4
-        )
+        self.conv4 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=8, padding=4)
         self.pool5 = nn.MaxPool2d(kernel_size=4, stride=4)
-        self.conv6 = nn.Conv2d(
-            in_channels=32, out_channels=64, kernel_size=8, padding=4
-        )
+        self.conv6 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=8, padding=4)
         self.pool7 = nn.MaxPool2d(kernel_size=4, stride=4)
-        self.conv8 = nn.Conv2d(
-            in_channels=64, out_channels=128, kernel_size=8, padding=4
-        )
+        self.conv8 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=8, padding=4)
+        self.fc9 = nn.Linear(in_features=4, out_features=1)
+
 
     def forward(self, x):
         x = self.conv1(x)
@@ -52,6 +48,9 @@ class Encoder(nn.Module):
         x = self.pool7(x)
         x = self.conv8(x)
         x = nn.functional.relu(x)
+        x = x.view(x.size()[0],128,4) 
+        x = self.fc9(x)
+        x = nn.functional.relu(x) 
         return x
 
 
@@ -59,6 +58,7 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
+        self.fc0 = nn.Linear(in_features=1, out_features=4)
         self.conv1 = nn.ConvTranspose2d(
             in_channels=128,
             out_channels=64,
@@ -104,6 +104,9 @@ class Decoder(nn.Module):
         )
 
     def forward(self, x):
+        x = self.fc0(x) 
+        x = nn.functional.relu(x)
+        x = x.view(x.size()[0],128,2,2) 
         x = self.conv1(x)
         x = nn.functional.relu(x)
         x = self.conv2(x)
@@ -117,7 +120,6 @@ class Decoder(nn.Module):
         x = self.conv6(x)
         x = nn.functional.sigmoid(x)
         return x
-
 
 # Define the Convolutional Autoencoder
 class ConvAutoencoder(nn.Module):
@@ -151,15 +153,17 @@ def train(model, data_loader, num_epochs=10, learning_rate=0.0001):
             loss = loss_fn(reconstructed_img, img)
             loss.backward()
             optimizer.step()
-        if epoch == 19:
+        if epoch == num_epochs-1:
             img = data[0]
             reconstructed_img = model(img)
+
             fig, axes = plt.subplots(1, 2, figsize=(12, 6))
             axes[0].imshow(img[0].squeeze())
             axes[0].set_title("True")
             axes[1].imshow(reconstructed_img[0].squeeze().detach().numpy())
             axes[1].set_title("Reconstructed")
             fig.tight_layout()
+            plt.savefig(f"autoencoder_true_reconstructed_{num_epochs}.png", dpi=100)
             plt.show()
             print()
         print("Epoch [{}/{}], Loss: {:.4f}".format(epoch + 1, num_epochs, loss.item()))
@@ -167,6 +171,9 @@ def train(model, data_loader, num_epochs=10, learning_rate=0.0001):
 
 if __name__ == "__main__":
     plt.style.use("resources/default.mplstyle")
+    rand = 7
+    np.random.seed(rand)
+    torch.manual_seed(rand)
 
     task = 2
     res_id = "BRU"
@@ -219,10 +226,11 @@ if __name__ == "__main__":
     model = ConvAutoencoder()
 
     # Train the model
-    train(model, train_loader, num_epochs=20, learning_rate=1e-3)
+    print(test_data.shape)
+    train(model, train_loader, num_epochs=55, learning_rate=1e-3)
 
     # Use the trained model to reconstruct a sample from the test data
-    reduced_data = np.zeros((600, 512))
+    reduced_data = np.zeros((600, 128)) #512 256 128
     for i in range(600):
         sample = train_data[i]  # Choose any sample from the test set
         input_tensor = torch.tensor(sample).unsqueeze(0).float()
@@ -236,6 +244,7 @@ if __name__ == "__main__":
     ax.set_xlabel(r"$c(t)$")
     ax.set_ylabel(r"$t$")
     plt.tight_layout()
+    plt.savefig(f"autoencoder_meshgrid.png", dpi=100)
     plt.show()
     print()
     # reconstructed_output = model(input_tensor).detach().numpy()
