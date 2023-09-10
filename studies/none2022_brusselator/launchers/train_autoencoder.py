@@ -48,7 +48,7 @@ class Encoder(nn.Module):
         x = self.pool7(x)
         x = self.conv8(x)
         x = nn.functional.relu(x)
-        x = x.view(x.size()[0],128,4) 
+        x = x.view(x.size()[0],x.size()[1],4) 
         x = self.fc9(x)
         x = nn.functional.relu(x) 
         return x
@@ -59,54 +59,17 @@ class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
         self.fc0 = nn.Linear(in_features=1, out_features=4)
-        self.conv1 = nn.ConvTranspose2d(
-            in_channels=128,
-            out_channels=64,
-            kernel_size=8,
-            stride=4,
-            padding=4,
-            output_padding=1,
-        )
-        self.conv2 = nn.ConvTranspose2d(
-            in_channels=64,
-            out_channels=32,
-            kernel_size=8,
-            stride=4,
-            padding=4,
-            output_padding=1,
-        )
-        self.conv3 = nn.ConvTranspose2d(
-            in_channels=32,
-            out_channels=16,
-            kernel_size=8,
-            stride=2,
-            padding=4,
-            output_padding=1,
-        )
-        self.conv4 = nn.ConvTranspose2d(
-            in_channels=16,
-            out_channels=8,
-            kernel_size=8,
-            stride=2,
-            padding=4,
-            output_padding=1,
-        )
-        self.conv5 = nn.ConvTranspose2d(
-            in_channels=8,
-            out_channels=4,
-            kernel_size=8,
-            stride=2,
-            padding=4,
-            output_padding=1,
-        )
-        self.conv6 = nn.ConvTranspose2d(
-            in_channels=4, out_channels=1, kernel_size=8, padding=4
-        )
+        self.conv1 = nn.ConvTranspose2d( in_channels=128, out_channels=64, kernel_size=8, stride=4, padding=4, output_padding=1,)
+        self.conv2 = nn.ConvTranspose2d( in_channels=64, out_channels=32, kernel_size=8, stride=4, padding=4, output_padding=1,)
+        self.conv3 = nn.ConvTranspose2d( in_channels=32, out_channels=16, kernel_size=8, stride=2, padding=4, output_padding=1,)
+        self.conv4 = nn.ConvTranspose2d( in_channels=16, out_channels=8, kernel_size=8, stride=2, padding=4, output_padding=1,)
+        self.conv5 = nn.ConvTranspose2d( in_channels=8, out_channels=4, kernel_size=8, stride=2, padding=4, output_padding=1,)
+        self.conv6 = nn.ConvTranspose2d( in_channels=4, out_channels=1, kernel_size=8, padding=4 )
 
     def forward(self, x):
         x = self.fc0(x) 
         x = nn.functional.relu(x)
-        x = x.view(x.size()[0],128,2,2) 
+        x = x.view(x.size()[0],x.size()[1],2,2) 
         x = self.conv1(x)
         x = nn.functional.relu(x)
         x = self.conv2(x)
@@ -135,7 +98,7 @@ class ConvAutoencoder(nn.Module):
 
 
 # Define the training function
-def train(model, data_loader, num_epochs=10, learning_rate=0.0001):
+def train(model, data_loader, num_epochs=10, learning_rate=0.0001, task=0):
     loss_fn = nn.L1Loss()
     ssim_module = SSIM(data_range=255, size_average=True, channel=1)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -163,8 +126,8 @@ def train(model, data_loader, num_epochs=10, learning_rate=0.0001):
             axes[1].imshow(reconstructed_img[0].squeeze().detach().numpy())
             axes[1].set_title("Reconstructed")
             fig.tight_layout()
-            plt.savefig(f"autoencoder_true_reconstructed_{num_epochs}.png", dpi=100)
-            plt.show()
+            plt.savefig(f"roll_autoencoder_true_reconstructed_task_{task}_{num_epochs}.png", dpi=100)
+            # plt.show()
             print()
         print("Epoch [{}/{}], Loss: {:.4f}".format(epoch + 1, num_epochs, loss.item()))
 
@@ -174,12 +137,20 @@ if __name__ == "__main__":
     rand = 7
     np.random.seed(rand)
     torch.manual_seed(rand)
+    
 
-    task = 2
     res_id = "BRU"
     res = Research.open(res_id)
+
+    task, fname = (7, "brusselator2DA1.0_B4.0.npz")
+    # for task, fname in [   (3, "brusselator2DA1.0_B2.1.npz"),
+    #                        (4, "brusselator2DA1.0_B2.5.npz"),
+    #                        (5, "brusselator2DA1.0_B3.0.npz"),
+    #                        (6, "brusselator2DA1.0_B3.5.npz"),
+    #                        (7, "brusselator2DA1.0_B4.0.npz")]:
+    print(task, fname)
     task_path = res.get_task_path(task)
-    filename = Path(task_path) / "brusselator2DA_1.9B_4.8.npz"
+    filename = Path(task_path) / fname
     data_raw = np.load(filename)
     n_pod_components = 2
 
@@ -200,14 +171,16 @@ if __name__ == "__main__":
     # data_u = data_raw["u"]
     # data_v = data_raw["v"]
     data = data_raw["u"] / np.max(data_raw["u"])
+    data = data[:,::2,::2]
     time_dim = data.shape[0]
     height_dim = data.shape[1]
     width_dim = data.shape[2]
     data = data.reshape((time_dim, 1, height_dim, width_dim))
-
+    print(data.shape)
     # Split data into train and test sets (you can adjust the ratio as needed)
-    train_data = data[:600]
-    test_data = data[600:]
+    time_train = 2000
+    train_data = data[:time_train]
+    test_data = data[time_train:]
 
     # Create dataloaders for the train and test datasets
     batch_size = 8
@@ -223,15 +196,18 @@ if __name__ == "__main__":
     )
 
     # Create an instance of the Convolutional Autoencoder model
-    model = ConvAutoencoder()
+    # model = ConvAutoencoder()
 
-    # Train the model
-    print(test_data.shape)
-    train(model, train_loader, num_epochs=55, learning_rate=1e-3)
+    # # Train the model
+    # print(test_data.shape)
+    # train(model, train_loader, num_epochs=50, learning_rate=1e-3)
+
+    # torch.save(model,f'model_task_{task}.pth')
+    model = torch.load(f'model_task_{task}.pth')
 
     # Use the trained model to reconstruct a sample from the test data
-    reduced_data = np.zeros((600, 128)) #512 256 128
-    for i in range(600):
+    reduced_data = np.zeros((time_train, 128)) #512 256 128
+    for i in range(time_train):
         sample = train_data[i]  # Choose any sample from the test set
         input_tensor = torch.tensor(sample).unsqueeze(0).float()
         reduced_data[i, :] = model.encoder(input_tensor).detach().numpy().reshape(-1)
@@ -244,7 +220,13 @@ if __name__ == "__main__":
     ax.set_xlabel(r"$c(t)$")
     ax.set_ylabel(r"$t$")
     plt.tight_layout()
-    plt.savefig(f"autoencoder_meshgrid.png", dpi=100)
-    plt.show()
+    plt.savefig(f"autoencoder_meshgrid_task_{task}.png", dpi=100)
+    # plt.show()
     print()
     # reconstructed_output = model(input_tensor).detach().numpy()
+    
+    
+    import winsound
+    freq = 500 # Set frequency To 2500 Hertz
+    dur = 100 # Set duration To 1000 ms == 1 second
+    winsound.Beep(freq, dur)

@@ -17,20 +17,33 @@ from studies.none2022_brusselator.extensions import (
 
 
 PLOT_TRAJECTORIES = False
-PLOT_2D_SNAPSHOTS = True
+PLOT_2D_SNAPSHOTS = False
 MAKE_A_MOVIE = False
 
 
 if __name__ == "__main__":
     plt.style.use("resources/default.mplstyle")
 
-    task = 2
+    # task = 2
+    # task = 3
+    # task = 4
+    # task = 5
+    # task = 6
+    task = 7
     res_id = "BRU"
     res = Research.open(res_id)
     task_path = res.get_task_path(task)
-    filename = Path(task_path) / "brusselator2DA_1.9B_4.8.npz"
+
+    # filename = Path(task_path) / "brusselator2DA_1.9B_4.8.npz" # 2
+    # filename = Path(task_path) / "brusselator2DA1.0_B2.1.npz" # 3
+    # filename = Path(task_path) / "brusselator2DA1.0_B2.5.npz" # 4
+    # filename = Path(task_path) / "brusselator2DA1.0_B3.0.npz" # 5 
+    # filename = Path(task_path) / "brusselator2DA1.0_B3.5.npz" # 6
+    filename = Path(task_path) / "brusselator2DA1.0_B4.0.npz" # 7
+
     data = np.load(filename)
-    n_pod_components = 2
+    # for i in [2,3,4,5,6]:
+    n_pod_components = 6
 
     # PCA/POD decomposition
     data_u = data["u"]
@@ -44,7 +57,7 @@ if __name__ == "__main__":
     X_u_pca_reduced = pca.fit_transform(X_u)
     X_v_pca_reduced = pca.fit_transform(X_v)
     u_v_concat = np.concatenate((X_u_pca_reduced, X_v_pca_reduced), axis=1)
-
+    print(full_space_dim, X_v.shape, X_v_pca_reduced.shape, u_v_concat.shape)
     # ESN
     rand = 10
     np.random.seed(rand)
@@ -92,7 +105,7 @@ if __name__ == "__main__":
     split_ratio = 0.9
     time_train = int(time_dim * split_ratio)
     train_data = np.array(u_v_concat[:time_train, :])
-    # print(train_data_pca.shape)
+    # print(train_data.shape)
 
     # standard fitting
     error = esn_bru_uv.fit(train_data, inspect=True)
@@ -110,7 +123,7 @@ if __name__ == "__main__":
             prediction_coeffs,
             t,
             0,
-            filename=f"u_v_ot_t_esn_{esn_type}_2d.png",
+            filename=f"u_v_ot_t_esn_{esn_type}_pca_{n_pod_components}_task_{task}_2d.png",
         )
 
     if PLOT_2D_SNAPSHOTS:
@@ -130,7 +143,7 @@ if __name__ == "__main__":
         ax.set_title(f"Original", fontsize=12, usetex=False)
         plt.tight_layout()
         # plt.savefig(f"u_im_esn_n_pod_{n_pod_components}.png", dpi=100)
-        plt.savefig(f"u_im_orig.png", dpi=100)
+        plt.savefig(f"u_im_orig_task_{task}.png", dpi=100)
 
     if MAKE_A_MOVIE:
         time_predict = u_v_concat.shape[0]
@@ -142,3 +155,13 @@ if __name__ == "__main__":
         )
         u_pred = u_pred.reshape((time_predict, *(data_u.shape[1:])))
         make_a_movie(u_pred, filename=f"movie_esn_2d_bru_n_pod_{n_pod_components}")
+    
+    fig, axes = plt.subplots(1, n_pod_components, figsize=(17, 4))
+    for i, ax in enumerate(axes.reshape(-1)):
+        physical_component = pca.components_[i].reshape(data_u.shape[1:])
+        im = ax.imshow(physical_component)
+        ax.set_title(f"Component #{i+1}", fontsize=12, usetex=False)
+        fig.colorbar(im, ax=ax, format="%1.0e", orientation = 'horizontal')
+    plt.tight_layout()
+    plt.savefig(f"pca_components_2d_task_{task}.png", dpi=100)
+    plt.show()
